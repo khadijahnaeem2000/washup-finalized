@@ -196,6 +196,7 @@
                     success: function (data) {
                         if(data.data){
                             // console.log(data.details);
+                               $('.card-title h3.card-label').text('Fuel Report (' + data.rider_incentive_name +')');
                             var rtable = $('#report_table').DataTable();
                             rtable.clear().draw();
                             rtable.rows.add($(data.details));

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddColToServicesTable extends Migration
+class AddColToRiderCompensation extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddColToServicesTable extends Migration
      */
     public function up()
     {
-        Schema::table('services', function (Blueprint $table) {
-            $table->string('ordeNumber')->nullable();
+        Schema::table('rider_incentives', function (Blueprint $table) {
+             $table->string('default_rider')->default('0')->after('status');
         });
     }
 
@@ -25,7 +25,7 @@ class AddColToServicesTable extends Migration
      */
     public function down()
     {
-        Schema::table('services', function (Blueprint $table) {
+        Schema::table('rider_incentives', function (Blueprint $table) {
             //
         });
     }

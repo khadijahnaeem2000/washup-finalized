@@ -130,6 +130,22 @@ public function list(Request $request)
                                 ->whereNull('route_plans.is_canceled')
                                 ->groupBy('riders.name','dt')
                                 ->get();
+             $rider = DB::table('riders')
+                    ->where('id', $rider_id)
+                    ->value('rider_incentives');
+                $pickup_rate = DB::table('rider_incentives')
+                    ->where('id', $rider)
+                    ->value('pickup_rate');
+                $rider_incentive_name = DB::table('rider_incentives')
+                    ->where('id', $rider)
+                    ->value('name');
+                
+                $dropoff_rate = DB::table('rider_incentives')
+                    ->where('id', $rider)
+                    ->value('drop_rate');
+                $pickdrop_rate = DB::table('rider_incentives')
+                    ->where('id', $rider)
+                    ->value('pickdrop_rate');    
         if(!($orders->isEmpty())){
                 $ord            = [];
                 foreach ($orders as $key => $value) {
@@ -154,7 +170,11 @@ public function list(Request $request)
                     ->where('rider_id', $rider_id)
                     ->whereDate('created_at', $dt)
                     ->value('lock');
+                    
                     $value->start_reading       = $start_reading;
+                    $value->pickup_rate         = $pickup_rate;
+                    $value->dropoff_rate        = $dropoff_rate;
+                    $value->pickdrop_rate       = $pickdrop_rate;
                     $value->end_reading         = $end_reading;
                     $value->meter_id            = $meter_id;
                     $value->a_dist              = $this->fn_calc_covered_kms($rider_id, $dt); //covered distance
@@ -175,7 +195,7 @@ public function list(Request $request)
                     $details    = view('fuel_report.report_table',
                                       compact('rec'))
                                     ->render();
-                    return response()->json(['data'=>$orders,'details'=>$details]);
+                    return response()->json(['data'=>$orders,'details'=>$details,'rider_incentive_name'=>$rider_incentive_name]);
                 }else{
                     return response()->json(['error'=>[0=>"Data not found"  ]]);
                 }

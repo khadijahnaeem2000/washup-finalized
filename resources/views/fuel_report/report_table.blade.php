@@ -1,5 +1,5 @@
 
-<?php if(isset($rec)) { $i=0; $a_dist = 0;$a_loc = 0;$drop_off = 0;$pick_drop = 0;$pick_up = 0;$start_reading = 0;$end_reading  = 0;$meter_id =0; ?>
+<?php if(isset($rec)) { $i=0; $a_dist = 0;$a_loc = 0;$pickdrop_rate = 0;$dropoff_rate = 0;$pickup_rate =0;$drop_off = 0;$pick_drop = 0;$pick_up = 0;$start_reading = 0;$end_reading  = 0;$meter_id =0; ?>
 
    <?php foreach($rec as $key =>$value){ $i++; ?><tr><td style="width:5%">
 
@@ -178,15 +178,15 @@
 
             <th></th>
 
-            <th></th>
+            <td>{{$value->pickup_rate}}</td>
 
-            <th></th>
+            <td>{{$value->dropoff_rate}}</td>
 
-            <th></th>
+            <td>{{$value->pickdrop_rate}}</td>
 
             <td></td></tr><tr><td></td>
 
-            <th>Total</th>
+            <th></th>
 
             <td></td>
 
@@ -198,11 +198,31 @@
 
             <th></th>
 
-            <th></th>
+            <th>{{($value->pickup_rate)*$pick_up}}</th>
+
+            <th>{{($value->dropoff_rate)*$drop_off}}</th>
+
+            <th>{{($value->pickdrop_rate)*$pick_drop}}</th>
+
+            <td></td></tr><tr><td></td>
+
+            <th>Total Fuel</th>
+
+            <td></td>
 
             <th></th>
 
             <th></th>
+
+            <td></td> 
+
+            <th></th>
+
+            <th></th>
+
+            <th></th>
+
+            <th>{{(($value->pickdrop_rate)*$pick_drop)+(($value->pickup_rate)*$pick_up)+(($value->dropoff_rate)*$drop_off)+(round($a_dist,1)*$i)}}</th>
 
             <td></td></tr><?php }?>
 
