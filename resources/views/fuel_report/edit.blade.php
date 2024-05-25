@@ -259,7 +259,7 @@
                                   
 
                                     <th style="text-align:center">End Ride</th>
-                                <th>{{$record->id}}</th>
+                              
 
                                 </tr>
                                  <tr data-record-id="{{$record->id}}">

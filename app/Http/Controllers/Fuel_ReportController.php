@@ -133,6 +133,9 @@ public function list(Request $request)
              $rider = DB::table('riders')
                     ->where('id', $rider_id)
                     ->value('rider_incentives');
+                    $rider_name = DB::table('riders')
+                    ->where('id', $rider_id)
+                    ->value('name');
                 $pickup_rate = DB::table('rider_incentives')
                     ->where('id', $rider)
                     ->value('pickup_rate');
@@ -195,7 +198,7 @@ public function list(Request $request)
                     $details    = view('fuel_report.report_table',
                                       compact('rec'))
                                     ->render();
-                    return response()->json(['data'=>$orders,'details'=>$details,'rider_incentive_name'=>$rider_incentive_name]);
+                    return response()->json(['data'=>$orders,'details'=>$details,'rider_incentive_name'=>$rider_incentive_name,'rider_name'=>$rider_name,'from'=>$from,'to'=>$to]);
                 }else{
                     return response()->json(['error'=>[0=>"Data not found"  ]]);
                 }
@@ -800,7 +803,17 @@ public function checkLockStatus(Request $request)
                     ->where('rider_id', $rider)
                     ->whereDate('plan_date', $date)
                     ->value('lock');
-
+                    $StartReading = DB::table('rider_histories')
+                    ->where('rider_id', $rider)
+                    ->whereDate('plan_date', $date)
+                    ->value('start_reading');
+ $EndReading = DB::table('rider_histories')
+                    ->where('rider_id', $rider)
+                    ->whereDate('plan_date', $date)
+                    ->value('end_reading');
+                    if($StartReading === null && $EndReading === null){
+                         return response()->json(['Nodata' => true]);
+                    }
     if ($lockStatus === 1) {
         return response()->json(['locked' => true]);
     } else {
