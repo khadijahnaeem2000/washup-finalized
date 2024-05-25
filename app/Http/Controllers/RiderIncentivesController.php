@@ -33,6 +33,7 @@ class RiderIncentivesController extends Controller
                                 'rider_incentives.kilometer',
                                 'rider_incentives.status',
                                 'rider_incentives.default_rider',
+                                'rider_incentives.drop_rate'
                                 //  DB::raw('@srno  := @srno  + 1 AS srno')
                                 )
 

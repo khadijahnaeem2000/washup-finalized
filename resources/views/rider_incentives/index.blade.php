@@ -28,6 +28,7 @@
                                         <th>ID</th>
                                         <th>Name</th>
                                         <th>Pickup Rate</th>
+                                        <th>Dropoff Rate</th>
                                         <th>Pickdrop Rate</th>
                                         <th>kilometer Rate</th>
                                         <th>Status</th>
@@ -61,6 +62,7 @@
                     {"data": "id", "visible": false},
                     {"data": "name"},
                     {"data": "pickup_rate"},
+                    {"data": "drop_rate"},
                     {"data": "pickdrop_rate"},
                     {"data": "kilometer"},
                        {

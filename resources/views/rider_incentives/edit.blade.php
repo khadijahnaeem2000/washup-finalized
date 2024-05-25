@@ -17,7 +17,7 @@
             <!--begin::Card-->
             <div class="card card-custom gutter-b example example-compact">
                 <div class="card-header">
-                    <h3 class="card-title">Add new @yield('title') </h3>
+                    <h3 class="card-title">Edit @yield('title') </h3>
                   
                     <div class="card-toolbar">
                         <a  href="{{ route('rider_incentives.index') }}" class="btn btn-primary btn-sm ">
@@ -60,7 +60,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
+                          <div class="row">
                             <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                                 <div class="form-group">
                                     {!! Html::decode(Form::label('kilometer','Kilometer rate')) !!}
@@ -70,6 +70,18 @@
                                     @endif
                                 </div>
                             </div>
+                              <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                                <div class="form-group">
+                                    {!! Html::decode(Form::label('drop_rate','Dropoff Rate rate')) !!}
+                                    {{ Form::number('drop_rate', null, array('placeholder' => 'Enter drop rate','class' => 'form-control')) }}
+                                    @if ($errors->has('drop_rate'))  
+                                        {!! "<span class='span_danger'>". $errors->first('drop_rate')."</span>"!!} 
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                        
                             <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                                   <div class="form-group">
                                     {!! Html::decode(Form::label('status','Status <span class="text-danger">*</span>')) !!}

@@ -259,7 +259,7 @@
                                   
 
                                     <th style="text-align:center">End Ride</th>
-                                
+                                <th>{{$record->id}}</th>
 
                                 </tr>
                                  <tr data-record-id="{{$record->id}}">
@@ -1163,7 +1163,7 @@ $(document).ready(function() {
                         },
                         success: function(response) {
                             console.log("Success");
-                                
+
                             // Hide the old and new tr elements
                             $tr.next().find('.old-start-reading').hide();
                             $tr.next().find('.old-end-reading').hide();
@@ -1280,20 +1280,10 @@ $(document).ready(function() {
                             $tr.next().next().find('.new-end-reading').hide();
                             // Create a new tr for the old value
                            // Create a new tr for the old value
-var $oldTr;
-if (response.start-reading !== null) {
-    $oldTr = $('<tr><td class="old-start-reading" style="text-align: center;">Old Reading: ' + 
-                   response.oldStart+ '</td>' +
-                   '<td class="old-start-reading" style="text-align: center;">Old Reading: ' + 
-                   oldValue + '</td></tr>');
-} else {
-    $oldTr = $('<tr><td class="old-start-reading" style="text-align: center;"></td>' +
-                   '<td class="old-start-reading" style="text-align: center;">Old Reading: ' + 
-                   oldValue + '</td></tr>');
-}
 
-
-
+var $oldTr = $('<tr><td class="old-start-reading" style="text-align: center;">Old Reading: ' +  response.oldStart + '</td>' + 
+                                 (response.oldStart ? '<td class="old-start-reading" style="text-align: center;">Old Reading: ' + oldValue + '</td>' : '<td> </td>') + 
+                                 '</tr>');
                             // Create a new tr for the updated value
                            // Create a new tr for the updated value
 var $newTr = $('<tr><td class="new-start-reading" style="text-align: center;">' + 

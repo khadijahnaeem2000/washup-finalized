@@ -14,5 +14,7 @@ class Rider_incentives extends Model
            'pickdrop_rate',
            'kilometer',
            'status',
+           'drop_rate',
+           'default_rider'
     ];
 }
