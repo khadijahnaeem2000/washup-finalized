@@ -173,7 +173,7 @@ public function list(Request $request)
                     ->where('rider_id', $rider_id)
                     ->whereDate('created_at', $dt)
                     ->value('lock');
-                    
+                    $value->rider_incentive_name= $rider_incentive_name;
                     $value->start_reading       = $start_reading;
                     $value->pickup_rate         = $pickup_rate;
                     $value->dropoff_rate        = $dropoff_rate;
@@ -216,40 +216,45 @@ public function list(Request $request)
 
 
 
-       public function fn_pickup_count($status_id, $hub_id, $rider_id, $dt)
-{
-    // Fetch all order IDs for pickups
-    $pickupOrderIds = DB::table('route_plans')
-                        ->select('order_id')
-                        ->where('status_id', $status_id)
-                        ->where('schedule', 1)
-                        ->whereDate('updated_at', $dt)
-                        ->where('rider_id', $rider_id)
-                        ->where('hub_id', $hub_id)
-                        ->pluck('order_id');
-     $uniqueCustomerIds = [];
+     public function fn_pickup_count($status_id, $hub_id, $rider_id, $dt)
+        {
+                // Fetch all order IDs for pickups
+                 $pickupOrderIds = DB::table('route_plans')
+                                    ->select('order_id')
+                                    ->where('status_id', $status_id)
+                                    ->where('schedule', 1)
+                                    ->whereDate('updated_at', $dt)
+                                    ->where('rider_id', $rider_id)
+                                    ->where('hub_id', $hub_id)
+                                    ->pluck('order_id');
 
-        // Loop through each order ID to fetch the corresponding customer ID
-        foreach ($pickupOrderIds as $orderId) {
-            $customerId = DB::table('orders')
-                            ->where('id', $orderId)
-                            ->value('customer_id');
+                $uniqueCustomerIds = [];
 
-            // Add the customer ID to the uniqueCustomerIds array if it's not already there
-            if (!in_array($customerId, $uniqueCustomerIds)) {
-                $uniqueCustomerIds[] = $customerId;
-            }
-        }
+                // Loop through each order ID to fetch the corresponding customer ID
+                foreach ($pickupOrderIds as $orderId) {
+                    $route = DB::table('route_plans')
+                                ->where('order_id', $orderId)
+                                ->where('is_canceled', null)
+                                ->first();
 
-        // Count the number of unique customer IDs
-        $uniqueLocationCount = count($uniqueCustomerIds);
+                    if ($route) {
+                        $customerId = DB::table('orders')
+                                        ->where('id', $orderId)
+                                        ->value('customer_id');
 
-        return $uniqueLocationCount;
-    // Count the unique customer IDs to get the count of unique locations for pickups
-    $uniquePickupLocationCount = $pickupCustomerIds->unique()->count();
+                        // Add the customer ID to the uniqueCustomerIds array if it's not already there
+                        if (!in_array($customerId, $uniqueCustomerIds)) {
+                            $uniqueCustomerIds[] = $customerId;
+                        }
+                    }
+                }
 
-    return $uniquePickupLocationCount;
-}
+                // Count the number of unique customer IDs
+                $uniqueLocationCount = count($uniqueCustomerIds);
+
+                return $uniqueLocationCount;
+
+        }    
 
     public function fn_calc_covered_kms($rider_id, $dt)
     {

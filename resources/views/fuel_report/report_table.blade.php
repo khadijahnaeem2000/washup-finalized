@@ -47,7 +47,7 @@
 
                     <?php $end_reading += $value->end_reading; ?>
 
-                    {{$value->end_reading}}
+                    {{round($value->end_reading)}} Kms
 
                 @endif
 
@@ -166,7 +166,7 @@
 
             <td></td></tr><tr><td></td>
 
-            <th></th>
+            <th>{{$value->rider_incentive_name}}</th>
 
             <td></td>
 

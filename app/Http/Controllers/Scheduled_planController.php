@@ -281,41 +281,45 @@ class Scheduled_planController extends Controller
 
         return $recd;
     }
+     public function fn_order_count($status_id, $hub_id, $rider_id, $dt)
+     {
+                // Fetch all order IDs for pickups
+                 $pickupOrderIds = DB::table('route_plans')
+                                    ->select('order_id')
+                                    ->where('status_id', $status_id)
+                                    ->where('schedule', 1)
+                                    ->whereDate('updated_at', $dt)
+                                    ->where('rider_id', $rider_id)
+                                    ->where('hub_id', $hub_id)
+                                    ->pluck('order_id');
 
-           public function fn_order_count($status_id, $hub_id, $rider_id, $dt)
-{
-    // Fetch all order IDs for pickups
-    $pickupOrderIds = DB::table('route_plans')
-                        ->select('order_id')
-                        ->where('status_id', $status_id)
-                        ->where('schedule', 1)
-                        ->whereDate('updated_at', $dt)
-                        ->where('rider_id', $rider_id)
-                        ->where('hub_id', $hub_id)
-                        ->pluck('order_id');
-     $uniqueCustomerIds = [];
+                $uniqueCustomerIds = [];
 
-        // Loop through each order ID to fetch the corresponding customer ID
-        foreach ($pickupOrderIds as $orderId) {
-            $customerId = DB::table('orders')
-                            ->where('id', $orderId)
-                            ->value('customer_id');
+                // Loop through each order ID to fetch the corresponding customer ID
+                foreach ($pickupOrderIds as $orderId) {
+                    $route = DB::table('route_plans')
+                                ->where('order_id', $orderId)
+                                ->where('is_canceled', null)
+                                ->first();
 
-            // Add the customer ID to the uniqueCustomerIds array if it's not already there
-            if (!in_array($customerId, $uniqueCustomerIds)) {
-                $uniqueCustomerIds[] = $customerId;
-            }
-        }
+                    if ($route) {
+                        $customerId = DB::table('orders')
+                                        ->where('id', $orderId)
+                                        ->value('customer_id');
 
-        // Count the number of unique customer IDs
-        $uniqueLocationCount = count($uniqueCustomerIds);
+                        // Add the customer ID to the uniqueCustomerIds array if it's not already there
+                        if (!in_array($customerId, $uniqueCustomerIds)) {
+                            $uniqueCustomerIds[] = $customerId;
+                        }
+                    }
+                }
 
-        return $uniqueLocationCount;
-    // Count the unique customer IDs to get the count of unique locations for pickups
-    $uniquePickupLocationCount = $pickupCustomerIds->unique()->count();
+                // Count the number of unique customer IDs
+                $uniqueLocationCount = count($uniqueCustomerIds);
 
-    return $uniquePickupLocationCount;
-}
+                return $uniqueLocationCount;
+
+            }       
     
 
     public function schedule_payment_rides(Request $request)
