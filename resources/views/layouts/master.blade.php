@@ -857,8 +857,7 @@
                                                                     <a href="{{url('/fuel_report')}}" class="menu-link">
                                                                         <span class="menu-text">Fuel Reports</span>
                                                                     </a>
-                                                        </li>
-                                                        
+                                                                </li>
                                                           
                                                     </ul>
                                                     <!--end::Nav-->

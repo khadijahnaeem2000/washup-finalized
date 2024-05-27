@@ -282,7 +282,7 @@ class Scheduled_planController extends Controller
         return $recd;
     }
      public function fn_order_count($status_id, $hub_id, $rider_id, $dt)
-     {
+        {
                 // Fetch all order IDs for pickups
                  $pickupOrderIds = DB::table('route_plans')
                                     ->select('order_id')
@@ -319,7 +319,7 @@ class Scheduled_planController extends Controller
 
                 return $uniqueLocationCount;
 
-            }       
+        }       
     
 
     public function schedule_payment_rides(Request $request)

@@ -496,6 +496,7 @@ Route::group(['middleware' => ['auth']], function() {
 	Route::resource('/order_inspects', App\Http\Controllers\Order_inspectController::class);
 
 	Route::get('/order_inspect_list/{id}', [App\Http\Controllers\Order_inspectController::class, 'list']);
+	Route::post('/order_inspect/create', [App\Http\Controllers\Order_inspectController::class, 'create'])->name('order_inspects.create');
 
 	Route::post('/update_order_tags_status', [App\Http\Controllers\Order_inspectController::class, 'update_order_tags_status']);
 

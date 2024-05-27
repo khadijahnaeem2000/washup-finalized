@@ -31,6 +31,7 @@ class Order_inspectController extends Controller
          $this->middleware('permission:order_inspect-create', ['only' => ['create','store']]);
          $this->middleware('permission:order_inspect-edit', ['only' => ['edit','update']]);
          $this->middleware('permission:order_inspect-delete', ['only' => ['destroy']]);
+    
          $this->today =  date('Y-m-d');
     }
 
@@ -67,51 +68,7 @@ class Order_inspectController extends Controller
         return view('order_inspects.index',compact('hubs'));
     }
     
-     public function waver_delivery_request(Request $request)
-            {
-    // Retrieve the IDs from the request
-    $ids = $request->ids;
-
-    // Check if IDs are provided
-    if ($ids && count($ids) > 0) {
-        try {
-            $currentDateTime                = Carbon::now()->format('Y-m-d H:i:s');
-            $user                           =Auth::user()->id;
-            // Update orders with the provided IDs
-            Order::whereIn('id', $ids)->update(['waver_delivery' => 1,'delivery_charges'=> 0,'phase'=> "Inspect Order",'DW_when'=>$currentDateTime,'DW_who'=>$user]);
-
-            // Call send_invoice function for each order
-            foreach ($ids as $order_id) {
-                // Retrieve order details
-                $order = Order::findOrFail($order_id);
-                
-                // Check if email alert is on for this order
-                $email_alert = $this->is_email_alert_on($order_id);
-
-                // Send invoice and handle response
-                if ($email_alert == 1) {
-                    $mail = app('App\Http\Controllers\MailController')->send_invoice($order_id);
-                    if ($mail == 1) {
-                        $msg = "Order verified and email sent successfully.";
-                    } else {
-                        $msg = "Order verified but email not sent successfully.";
-                    }
-                } else {
-                    $msg = "Order verified successfully.";
-                }
-            }
-
-            // If all invoices sent successfully, return success response
-            return response()->json(['success' => true, 'message' => 'Orders updated successfully and invoices sent']);
-        } catch (\Exception $e) {
-            // Handle any exceptions
-            return response()->json(['success' => false, 'message' => 'Error updating orders: ' . $e->getMessage()]);
-        }
-    } else {
-        // No IDs provided
-        return response()->json(['success' => false, 'message' => 'No IDs were provided']);
-    }
-}
+ 
     public function list($hub_id)
     {
                       DB::statement(DB::raw('set @srno=0'));
@@ -185,8 +142,50 @@ class Order_inspectController extends Controller
             // </a>
     }
 
-    public function create()
+    public function create(Request $request)
     {
+          // Retrieve the IDs from the request
+    $ids = $request->ids;
+
+    // Check if IDs are provided
+    if ($ids && count($ids) > 0) {
+        try {
+            $currentDateTime                = Carbon::now()->format('Y-m-d H:i:s');
+            $user                           =Auth::user()->id;
+            // Update orders with the provided IDs
+            Order::whereIn('id', $ids)->update(['waver_delivery' => 1,'delivery_charges'=> 0,'phase'=> "Inspect Order",'DW_when'=>$currentDateTime,'DW_who'=>$user]);
+
+            // Call send_invoice function for each order
+            foreach ($ids as $order_id) {
+                // Retrieve order details
+                $order = Order::findOrFail($order_id);
+                
+                // Check if email alert is on for this order
+                $email_alert = 1;
+
+                // Send invoice and handle response
+                if ($email_alert == 1) {
+                    $mail = app('App\Http\Controllers\MailController')->send_invoice($order_id);
+                    if ($mail == 1) {
+                        $msg = "Order verified and email sent successfully.";
+                    } else {
+                        $msg = "Order verified but email not sent successfully.";
+                    }
+                } else {
+                    $msg = "Order verified successfully.";
+                }
+            }
+
+            // If all invoices sent successfully, return success response
+            return response()->json(['success' => true, 'message' => 'Orders updated successfully and invoices sent']);
+        } catch (\Exception $e) {
+            // Handle any exceptions
+            return response()->json(['success' => false, 'message' => 'Error updating orders: ' . $e->getMessage()]);
+        }
+    } else {
+        // No IDs provided
+        return response()->json(['success' => false, 'message' => 'No IDs were provided']);
+    }
     }
 
     // updating order status for "receiving to hub from wash_houses" //

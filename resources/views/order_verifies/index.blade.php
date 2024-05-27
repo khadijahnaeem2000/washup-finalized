@@ -21,10 +21,11 @@
                         <div style="margin-right: 10px">
                             {!! Form::select('hub_id',$hubs, null, array('class' => 'form-control','required'=>'true','id'=>'hub_id')) !!}
                         </div>
-
+                        @can('waive')
                         <div style="margin-right: 5px">
                            <a href="" class="btn btn-primary">Waive Delivery</a>
                         </div>
+                        @endcan
                     </div>
                 </div>
                 <?php $checkvar = false; ?>

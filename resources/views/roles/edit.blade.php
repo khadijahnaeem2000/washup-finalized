@@ -39,11 +39,15 @@
                                                 <th>Create</th>
                                                 <th>Edit</th>
                                                 <th>Delete</th>
+                                               
                                             </tr>
                                             <?php   $i=0;
                                                 $val = $permission[0]['name'];
+                                              
                                                 $explodedFirstValue = explode("-", $val);
-                                                $firstVal = $explodedFirstValue[0];  // exploded permission name
+                                               
+                                                $firstVal = $explodedFirstValue[0];
+                                                // exploded permission name
                                                 ?>
                                             <tr>
                                                 <td> <label>{{ ucfirst($firstVal)}}</label></td>
@@ -53,6 +57,7 @@
                                                         $currentVal = $value->name;
                                                         $explodedLastValue = explode("-", $currentVal);
                                                         $LastVal = $explodedLastValue[0];
+                                                        
                                                         // $ch = $explodedLastValue[1];
                                                         if( $firstVal == $LastVal){
                                                 ?>

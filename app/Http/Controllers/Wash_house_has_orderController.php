@@ -58,6 +58,7 @@ class Wash_house_has_orderController extends Controller
         return view('wash_house_has_orders.index',compact('hubs'));
     }
 
+    
     public function fetch_wash_house(Request $request)
     {
         if($request->ajax()){

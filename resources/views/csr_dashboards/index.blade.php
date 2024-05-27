@@ -497,7 +497,7 @@
                                    </div> 
                             
                                 </div>
-                         
+                             @can('waive')
                               <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                                     <div class="form-group">
                                        {!! Html::decode(Form::label('waver_delivery','Waive Delivery <span class="text-danger">*</span>')) !!}
@@ -512,7 +512,9 @@
                                         {!! "<span class='span_danger'>". $errors->first('waver_delivery')."</span>"!!} 
                                     @endif
                                 </div>
+                              
                                 </div>
+                                  @endcan
                             </div>
                   
 

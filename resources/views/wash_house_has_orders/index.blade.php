@@ -10,7 +10,7 @@
                 <div class="card card-custom">
                     <div class="card-header py-3">
                         <div class="card-title">
-                            <h3 class="card-label">Manage Wash-house @yield('title')</h3>
+                            <h3 class="card-label">Manage Wash-house iiiii@yield('title')</h3>
                         </div>
                         @can('Wash_house_order-list')
                         <div class="card-toolbar">
@@ -29,6 +29,7 @@
                                     @can('special_wash_house-assign')
                                         <button type="" name ="btn_assign_special" id="btn_assign_special" class="btn btn-success font-weight-bolder btn_special">Assign Special<i class="fas fa-check"></i></button>
                                     @endcan
+                                    
                                     <button type="" name ="btn_assign" id="btn_assign"  class="btn btn-primary font-weight-bolder btn_special">Assign <i class="fas fa-check"></i></button>
                                 </div>
                             </div> <input type ="hidden" name="special">

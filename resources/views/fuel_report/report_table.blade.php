@@ -135,13 +135,13 @@
     </button>
 </div>
 
-
+                @can('Lock')
                 <div class="btn-group btn-group">
                     <button id="lock-btn-{{ $value->meter_id }}" class="btn btn-{{ $value->lockStatus ? 'danger' : 'secondary' }} btn-sm" onclick="toggleLock('{{ $value->meter_id }}')">
                         <i class="fas fa-lock"></i>
                     </button>
                 </div>
-
+                @endcan
             </td>
 
         </tr><?php }?><tr><td></td>

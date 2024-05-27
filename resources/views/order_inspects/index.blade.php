@@ -25,9 +25,11 @@
                             <h4 style="text-align: center">Action</h4>
                             <button type="submit" id="btn_receive" name="btn_receive" class="btn btn-success font-weight-bolder">Received to Hub <i class="fas fa-check"></i></button>
                         </div>
+                          @can('waive')
                         <div style="margin-top: 27px; margin-right:10px">
                             <a href="#" class="btn btn-primary" id="waverDeliveryBtn">Waive Delivery</a>
                         </div>
+                        @endcan
                     </div>
                 </div>
                 <?php $checkvar = false; ?>
@@ -153,7 +155,7 @@
 
                     if (selectedIDs.length > 0) {
                         $.ajax({
-                            url: "{{ route('waver_deliverys') }}",
+                            url: "{{ route('order_inspects.create') }}",
                             type: "POST",
                             data: {
                                 ids: selectedIDs,
@@ -166,10 +168,11 @@
                                         location.reload();
                                     }, 4000);
                                 } else {
-                                    console.log("Error: " + data.message);
+                                     toastr.error("User have not permission for this page access.");
                                 }
                             },
                             error: function (xhr, status, error) {
+                               
                                 console.error(xhr.responseText);
                             }
                         });

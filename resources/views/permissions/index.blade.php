@@ -12,8 +12,8 @@
                         <h3 class="card-label">Manage Permissions</h3>
                     </div>
                     <div class="card-toolbar">
-                        <!-- <a  href="{{ route('permissions.create') }}" class="btn btn-primary font-weight-bolder">
-                        <i class="la la-plus"></i>Add new permission</a> -->
+                        <a  href="{{ route('permissions.create') }}" class="btn btn-primary font-weight-bolder">
+                        <i class="la la-plus"></i>Add new permission</a>
                     </div>
                 </div>
                 <div class="card-body">
