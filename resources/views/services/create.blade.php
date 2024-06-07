@@ -53,13 +53,7 @@
                                     {!! "<span class='span_danger'>". $errors->first('qty')."</span>"!!} 
                                 @endif
                             </div> 
-                            <div class="col-lg-3 col-md-3 col-sm-5 col-xs-5">
-                                {!! Html::decode(Form::label('order_number','Order Number <span class="text-danger">*</span>')) !!}
-                                {{ Form::number('order_number', null, array('placeholder' => 'Enter order number','class' => 'form-control', 'required')) }}
-                                @if ($errors->has('order_number'))  
-                                    {!! "<span class='span_danger'>". $errors->first('order_number')."</span>"!!} 
-                                @endif
-                            </div> 
+                           
                             <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
                                 {!! Html::decode(Form::label('rate','Rate')) !!}
                                 {!! Form::number('rate', null, array('placeholder' => 'Enter rate','class' => 'form-control','readonly'=>'true', 'min'=>'0','required'=>'true')) !!}

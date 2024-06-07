@@ -14,6 +14,6 @@ class ServicesOrderNumber extends Seeder
      */
     public function run()
     {
-         DB::table('services')->update(['order_number' => DB::raw('id')]);
+         DB::table('services')->update(['orderNumber' => DB::raw('id')]);
     }
 }

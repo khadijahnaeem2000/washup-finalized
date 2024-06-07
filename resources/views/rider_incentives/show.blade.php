@@ -38,7 +38,14 @@
                                         <td>Kilometer Rate</td>
                                         <td>{{$data->kilometer}}</td>
                                     </tr>
-                                   
+                                   <tr>
+                                        <td>Status</td>
+                                        @if($data->status === 1)
+                                        <td>Active</td>
+                                        @else 
+                                        <td>InActive</td>
+                                        @endif
+                                    </tr>
                                    
                                     
                                    

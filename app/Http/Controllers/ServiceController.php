@@ -38,7 +38,7 @@ class ServiceController extends Controller
     {
         // DB::statement(DB::raw('set @srno=0'));
         $data = DB::table('services')
-                ->orderBy('services.name','ASC')
+                ->orderBy('services.orderNumber','ASC')
                 // ->orderBy('services.created_at','DESC')
                 ->leftjoin('units', 'units.id', '=', 'services.unit_id')
                 ->select(
@@ -330,49 +330,43 @@ class ServiceController extends Controller
     //start khadeeja's edit
       // Define a method to update the status of a service based on the provided request
     public function updateStatus(Request $request)
-    {
-      // Find the service by its ID
-       $service = Service::find($request->id);
+{
     
-      // Check if the service is found
-      if ($service) {
+    // Find the service by its ID
+    $service = Service::find($request->id);
+
+    // Check if the service is found
+    if ($service) {
         // Update the status of the service
-         // Save the changes to the database
-         Service::where('id',$request->id)->update(['status'=>$request->buttonstatus]);
-        
+        Service::where('id', $request->id)->update(['status' => $request->buttonstatus]);
+
         // Check if the status is 0
         if ($request->buttonstatus == 0) {
-          
             // If status is 0, delete corresponding records from customer_has_service table
             Customer_has_service::where('service_id', $service->id)->delete();
-        }
-        else{
-           
-                $customerjoin = DB::table('customer_types')
-                ->join('customers','customer_type_id','=','customer_types.id')
-                ->where('customer_types.name','Retail')
+        } else {
+            $customerjoin = DB::table('customer_types')
+                ->join('customers', 'customer_type_id', '=', 'customer_types.id')
+                ->where('customer_types.name', 'Retail')
                 ->select('customers.id')
                 ->get();
-             
-                    foreach($customerjoin as $data)
-                    {
-                       
-                    $newCustomer = new Customer_has_service;
-                    $newCustomer->customer_id = $data->id;
-                    $newCustomer->service_id = $service->id;
-                    $newCustomer->service_rate = $service->rate;
-                    $newCustomer->save();
-                    }
-            
+
+            foreach ($customerjoin as $data) {
+                $newCustomer = new Customer_has_service;
+                $newCustomer->customer_id = $data->id;
+                $newCustomer->service_id = $service->id;
+                $newCustomer->service_rate = $service->rate;
+                $newCustomer->save();
+            }
         }
         // Return a JSON response indicating success
         return response()->json(['success' => true]);
-      }   
-      else {
+    } else {
         // Return a JSON response indicating failure with a message
         return response()->json(['success' => false, 'message' => 'Service not found.']);
-      }
     }
+}
+
     //end khadeeja's edit
      public function show($id)
     {

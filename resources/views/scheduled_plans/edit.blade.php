@@ -337,6 +337,7 @@
                 success: function (data) {
 
                     if(data.details){
+                        console.log(data.details);
 
                         $("#"+tbl).html("");
 

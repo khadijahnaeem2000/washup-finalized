@@ -32,6 +32,7 @@ class Service extends Model
 
         static::creating(function ($model) {
             $model->orderNumber = $model->id;
+            $model->save();
         });
     }
     

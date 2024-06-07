@@ -26,7 +26,8 @@
                                 <thead>
                                     <tr>
                                         <th width="2%"></th>
-                                        <th  >#</th>
+                                        <th>#</th>
+                                        <th></th>
                                         <th>Name</th>
                                         <th>Rate</th>
                                         <th>Unit</th>
@@ -47,8 +48,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js" defer></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.css" rel="stylesheet" defer>
-
-<!-- Your HTML and Blade code remains unchanged -->
 
 <script>
     $(document).ready(function () {
@@ -75,18 +74,22 @@
                             return '<span hidden>'+data+'</span>';
                         }
                     },
-                     { "data": "orderNumber" },
+                    {"data" :"DT_RowIndex"},
+                    { "data": "orderNumber" ,
+                         "render":function(data){
+                            return '<span hidden>'+data+'</span>';
+                        }
+                    },
                     { "data": "name" },
                     { "data": "rate" },
                     { "data": "unit_name" },
-                   
                     {
                         "data": "status",
-                        "render": function (data) {
+                        "render": function (data, type, row) {
                             var checked = data == 1 ? 'checked' : '';
                             return '<span class="switch switch-outline switch-icon switch-primary">' +
                                 '<label>' +
-                                '<input type="checkbox" class="form-control" data-status="' + data + '" ' + checked + '>' +
+                                '<input type="checkbox" class="status-toggle" data-id="' + row.id + '" ' + checked + '>' +
                                 '<span></span>' +
                                 '</label>' +
                                 '</span>';
@@ -97,10 +100,8 @@
                         "orderable": true, 
                         "searchable": false 
                     },
-                   
                 ],
                 "order": [[1, 'asc']],
-              
             });
 
             // Initialize draggable functionality
@@ -117,42 +118,61 @@
             }).disableSelection();
         }
 
-        function updateOrderNumbers(serviceOrders)
-            {
-    // Perform AJAX request to update order numbers
-    var token = $("input[name='_token']").val();
-    $.ajax({
-        url: "{{ route('update_order_number') }}",
-        method: 'POST',
-        data: { serviceOrders: serviceOrders, _token: token },
-        dataType: 'json',
-        success: function (data) {
-            if (data.success) {
-                toastr.success(data.success); // Display success message
-                
-                // Set a timeout to refresh the page after 30 seconds
-                setTimeout(function() {
-                    location.reload(); // Refresh the page
-                }, 1000); // 30000 milliseconds = 30 seconds
-            } else {
-                toastr.error(data.error);
-            }
-        },
-        error: function (data) {
-            console.log('Error:', data);
+        function updateOrderNumbers(serviceOrders) {
+            // Perform AJAX request to update order numbers
+            var token = $("input[name='_token']").val();
+            $.ajax({
+                url: "{{ route('update_order_number') }}",
+                method: 'POST',
+                data: { serviceOrders: serviceOrders, _token: token },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.success); // Display success message
+                        
+                        // Set a timeout to refresh the page after 30 seconds
+                        setTimeout(function() {
+                            location.reload(); // Refresh the page
+                        }, 1000); // 30000 milliseconds = 30 seconds
+                    } else {
+                        toastr.error(data.error);
+                    }
+                },
+                error: function (data) {
+                    console.log('Error:', data);
+                }
+            });
         }
-    });
-}
 
+        function toggleServiceStatus(id, status) {
+            var token = $("input[name='_token']").val();
+            $.ajax({
+                url: "{{ route('update_status') }}",
+                method: 'POST',
+                data: { id: id, buttonstatus: status, _token: token },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success('Status updated successfully');
+                    } else {
+                        toastr.error(data.message);
+                    }
+                },
+                error: function (data) {
+                    console.log('Error:', data);
+                }
+            });
+        }
+
+        // Event listener for status toggle
+        $('#myTable').on('change', '.status-toggle', function () {
+            var serviceId = $(this).data('id');
+            var status = $(this).is(':checked') ? 1 : 0;
+            toggleServiceStatus(serviceId, status);
+        });
 
         initializeDataTable();
     });
-</script>
-
-<!-- Your HTML and Blade code remains unchanged -->
-
-
-
 </script>
 
 @endsection
