@@ -181,13 +181,19 @@ public function list(Request $request)
                     $value->end_reading         = $end_reading;
                     $value->meter_id            = $meter_id;
                     $value->a_dist              = $this->fn_calc_covered_kms($rider_id, $dt); //covered distance
-                    $value->a_loc               = $this->fn_order_count($hub_id, $rider_id, $dt);
-                    $status_id                  = 1;
-                    $value->pick_up             = $this->fn_pickup_count($status_id, $hub_id, $rider_id, $dt); // required distance
-                    $status_id                  = 2;
-                    $value->drop_off            = $this->fn_pickup_count($status_id, $hub_id, $rider_id, $dt);
-                    $status_id                  = 3;
-                    $value->pick_drop           = $this->fn_pickup_count($status_id, $hub_id, $rider_id, $dt);
+                    
+                    $uniqueLocations            = $this->fn_pickup_count($hub_id, $rider_id, $dt);
+
+                    $value->pick_up             = $uniqueLocations['pickup'];
+                    $value->drop_off            = $uniqueLocations['dropoff'];
+                    $value->pick_drop           = $uniqueLocations['pickdrop'];
+                    // $status_id                  = 1;
+                    // $value->pick_up             = $this->fn_pickup_count($status_id, $hub_id, $rider_id, $dt); // required distance
+                    // $status_id                  = 2;
+                    // $value->drop_off            = $this->fn_pickup_count($status_id, $hub_id, $rider_id, $dt);
+                    // $status_id                  = 3;
+                    // $value->pick_drop           = $this->fn_pickup_count($status_id, $hub_id, $rider_id, $dt);
+                    $value->a_loc               = $value->pick_up + $value->drop_off + $value->pick_drop;
                     $value->lockStatus          = $lock;
                     $ord[$key]              = $value;
                 }
@@ -216,45 +222,111 @@ public function list(Request $request)
 
 
 
-     public function fn_pickup_count($status_id, $hub_id, $rider_id, $dt)
-        {
-                // Fetch all order IDs for pickups
-                 $pickupOrderIds = DB::table('route_plans')
-                                    ->select('order_id')
-                                    ->where('status_id', $status_id)
-                                    ->where('schedule', 1)
-                                    ->whereDate('updated_at', $dt)
-                                    ->where('rider_id', $rider_id)
-                                    ->where('hub_id', $hub_id)
-                                    ->pluck('order_id');
+    //  public function fn_pickup_count($status_id, $hub_id, $rider_id, $dt)
+    //     {
+    //             // Fetch all order IDs for pickups
+    //              $pickupOrderIds = DB::table('route_plans')
+    //                                 ->select('order_id')
+    //                                 ->where('status_id', $status_id)
+    //                                 ->where('schedule', 1)
+    //                                 ->whereDate('updated_at', $dt)
+    //                                 ->where('rider_id', $rider_id)
+    //                                 ->where('hub_id', $hub_id)
+    //                                 ->pluck('order_id');
 
-                $uniqueCustomerIds = [];
+    //             $uniqueCustomerIds = [];
 
-                // Loop through each order ID to fetch the corresponding customer ID
-                foreach ($pickupOrderIds as $orderId) {
-                    $route = DB::table('route_plans')
-                                ->where('order_id', $orderId)
+    //             // Loop through each order ID to fetch the corresponding customer ID
+    //             foreach ($pickupOrderIds as $orderId) {
+    //                 $route = DB::table('route_plans')
+    //                             ->where('order_id', $orderId)
+    //                             ->where('is_canceled', null)
+    //                             ->first();
+
+    //                 if ($route) {
+    //                     $customerId = DB::table('orders')
+    //                                     ->where('id', $orderId)
+    //                                     ->value('customer_id');
+
+    //                     // Add the customer ID to the uniqueCustomerIds array if it's not already there
+    //                     if (!in_array($customerId, $uniqueCustomerIds)) {
+    //                         $uniqueCustomerIds[] = $customerId;
+    //                     }
+    //                 }
+    //             }
+
+    //             // Count the number of unique customer IDs
+    //             $uniqueLocationCount = count($uniqueCustomerIds);
+
+    //             return $uniqueLocationCount;
+
+    //     }    
+        
+        public function fn_pickup_count($hub_id, $rider_id, $dt)
+            {
+                // Fetch all route plans for the given date, hub, and rider
+                $routePlans = DB::table('route_plans')
+                                ->where('schedule', 1)
+                                ->whereDate('updated_at', $dt)
+                                ->where('rider_id', $rider_id)
+                                ->where('hub_id', $hub_id)
                                 ->where('is_canceled', null)
-                                ->first();
+                                ->get();
 
-                    if ($route) {
-                        $customerId = DB::table('orders')
-                                        ->where('id', $orderId)
-                                        ->value('customer_id');
+                $customerActions = [];
 
-                        // Add the customer ID to the uniqueCustomerIds array if it's not already there
-                        if (!in_array($customerId, $uniqueCustomerIds)) {
-                            $uniqueCustomerIds[] = $customerId;
+                // Loop through each route plan to categorize actions
+                foreach ($routePlans as $route) {
+                    $orderId = $route->order_id;
+                    $statusId = $route->status_id;
+
+                    $customerId = DB::table('orders')
+                                    ->where('id', $orderId)
+                                    ->value('customer_id');
+
+                    // Initialize customer's actions if not already present
+                    if (!isset($customerActions[$customerId])) {
+                        $customerActions[$customerId] = [
+                            'pickup' => false,
+                            'dropoff' => false,
+                            'pickdrop' => false
+                        ];
+                    }
+
+                    // Update customer actions based on status
+                    if ($statusId == 1) {
+                        $customerActions[$customerId]['pickup'] = true;
+                    } elseif ($statusId == 2) {
+                        $customerActions[$customerId]['dropoff'] = true;
+                    } elseif ($statusId == 3) {
+                        $customerActions[$customerId]['pickdrop'] = true;
+                    }
+                }
+
+                $pickdropCount = 0;
+                $pickupCount = 0;
+                $dropoffCount = 0;
+
+                // Determine the final counts based on customer actions
+                foreach ($customerActions as $actions) {
+                    if ($actions['pickdrop'] || ($actions['pickup'] && $actions['dropoff'])) {
+                        $pickdropCount++;
+                    } else {
+                        if ($actions['pickup']) {
+                            $pickupCount++;
+                        }
+                        if ($actions['dropoff']) {
+                            $dropoffCount++;
                         }
                     }
                 }
 
-                // Count the number of unique customer IDs
-                $uniqueLocationCount = count($uniqueCustomerIds);
-
-                return $uniqueLocationCount;
-
-        }    
+                return [
+                    'pickdrop' => $pickdropCount,
+                    'pickup' => $pickupCount,
+                    'dropoff' => $dropoffCount
+                ];
+            }
 
     public function fn_calc_covered_kms($rider_id, $dt)
     {
