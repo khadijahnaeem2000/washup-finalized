@@ -130,12 +130,12 @@
                     </a>
                 </div>
                <div class="btn-group btn-group">
-    <button id="edit-btn-{{ $value->meter_id }}" class="btn btn-secondary btn-sm edit-btn" onclick="toggleEdit('{{ $value->meter_id }}', '{{ $value->rider_id }}', '{{ $value->plan_date }}','{{$id}}')">
-        <i class="fas fa-pen"></i>
-    </button>
-</div>
+                <button id="edit-btn-{{ $value->meter_id }}" class="btn btn-secondary btn-sm edit-btn" onclick="toggleEdit('{{ $value->meter_id }}', '{{ $value->rider_id }}', '{{ $value->plan_date }}','{{$id}}')">
+                    <i class="fas fa-pen"></i>
+                </button>
+                </div>
 
-                @can('Lock')
+                @can('lock')
                 <div class="btn-group btn-group">
                     <button id="lock-btn-{{ $value->meter_id }}" class="btn btn-{{ $value->lockStatus ? 'danger' : 'secondary' }} btn-sm" onclick="toggleLock('{{ $value->meter_id }}')">
                         <i class="fas fa-lock"></i>

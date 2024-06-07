@@ -303,6 +303,11 @@ public function fn_order_count($hub_id, $rider_id, $dt)
                         ->where('id', $orderId)
                         ->value('customer_id');
 
+        // Skip if customer ID is null
+        if (is_null($customerId)) {
+            continue;
+        }
+
         // Initialize customer's actions if not already present
         if (!isset($customerActions[$customerId])) {
             $customerActions[$customerId] = [
@@ -845,6 +850,7 @@ public function fn_order_count($hub_id, $rider_id, $dt)
                         ->where('orders.customer_id', $customerId)
                         ->whereDate('route_plans.updated_at', $dt)
                         ->orderBy('route_plans.updated_at')
+                        ->where('route_plans.status_id', 3)
                         ->first();
 
                     if ($firstOrder) {
@@ -896,6 +902,7 @@ public function fn_order_count($hub_id, $rider_id, $dt)
                         ->where('orders.customer_id', $customerId)
                         ->whereDate('route_plans.updated_at', $dt)
                         ->orderBy('route_plans.updated_at')
+                        ->where('route_plans.status_id', 1)
                         ->first();
 
                     if ($firstOrder) {
@@ -968,6 +975,7 @@ public function fn_order_count($hub_id, $rider_id, $dt)
                         ->where('orders.customer_id', $customerId)
                         ->whereDate('route_plans.updated_at', $dt)
                         ->orderBy('route_plans.updated_at')
+                        ->where('route_plans.status_id', 2)
                         ->first();
 
                     if ($firstOrder) {

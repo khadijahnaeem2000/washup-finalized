@@ -88,8 +88,8 @@ class Fuel_ReportController extends Controller
 
 
 
-public function list(Request $request)
-    {
+        public function list(Request $request)
+         {
         $validator = Validator::make($request->all(),
             [
                 'hub_id'                => 'required|min:1',
@@ -222,111 +222,76 @@ public function list(Request $request)
 
 
 
-    //  public function fn_pickup_count($status_id, $hub_id, $rider_id, $dt)
-    //     {
-    //             // Fetch all order IDs for pickups
-    //              $pickupOrderIds = DB::table('route_plans')
-    //                                 ->select('order_id')
-    //                                 ->where('status_id', $status_id)
-    //                                 ->where('schedule', 1)
-    //                                 ->whereDate('updated_at', $dt)
-    //                                 ->where('rider_id', $rider_id)
-    //                                 ->where('hub_id', $hub_id)
-    //                                 ->pluck('order_id');
+                    public function fn_pickup_count($hub_id, $rider_id, $dt)
+{
+    // Fetch all route plans for the given date, hub, and rider
+    $routePlans = DB::table('route_plans')
+                    ->where('schedule', 1)
+                    ->whereDate('updated_at', $dt)
+                    ->where('rider_id', $rider_id)
+                    ->where('hub_id', $hub_id)
+                    ->where('is_canceled', null)
+                    ->get();
 
-    //             $uniqueCustomerIds = [];
+    $customerActions = [];
 
-    //             // Loop through each order ID to fetch the corresponding customer ID
-    //             foreach ($pickupOrderIds as $orderId) {
-    //                 $route = DB::table('route_plans')
-    //                             ->where('order_id', $orderId)
-    //                             ->where('is_canceled', null)
-    //                             ->first();
+    // Loop through each route plan to categorize actions
+    foreach ($routePlans as $route) {
+        $orderId = $route->order_id;
+        $statusId = $route->status_id;
 
-    //                 if ($route) {
-    //                     $customerId = DB::table('orders')
-    //                                     ->where('id', $orderId)
-    //                                     ->value('customer_id');
+        $customerId = DB::table('orders')
+                        ->where('id', $orderId)
+                        ->value('customer_id');
 
-    //                     // Add the customer ID to the uniqueCustomerIds array if it's not already there
-    //                     if (!in_array($customerId, $uniqueCustomerIds)) {
-    //                         $uniqueCustomerIds[] = $customerId;
-    //                     }
-    //                 }
-    //             }
+        // Skip if customer ID is null
+        if (is_null($customerId)) {
+            continue;
+        }
 
-    //             // Count the number of unique customer IDs
-    //             $uniqueLocationCount = count($uniqueCustomerIds);
+        // Initialize customer's actions if not already present
+        if (!isset($customerActions[$customerId])) {
+            $customerActions[$customerId] = [
+                'pickup' => false,
+                'dropoff' => false,
+                'pickdrop' => false
+            ];
+        }
 
-    //             return $uniqueLocationCount;
+        // Update customer actions based on status
+        if ($statusId == 1) {
+            $customerActions[$customerId]['pickup'] = true;
+        } elseif ($statusId == 2) {
+            $customerActions[$customerId]['dropoff'] = true;
+        } elseif ($statusId == 3) {
+            $customerActions[$customerId]['pickdrop'] = true;
+        }
+    }
 
-    //     }    
-        
-        public function fn_pickup_count($hub_id, $rider_id, $dt)
-            {
-                // Fetch all route plans for the given date, hub, and rider
-                $routePlans = DB::table('route_plans')
-                                ->where('schedule', 1)
-                                ->whereDate('updated_at', $dt)
-                                ->where('rider_id', $rider_id)
-                                ->where('hub_id', $hub_id)
-                                ->where('is_canceled', null)
-                                ->get();
+    $pickdropCount = 0;
+    $pickupCount = 0;
+    $dropoffCount = 0;
 
-                $customerActions = [];
-
-                // Loop through each route plan to categorize actions
-                foreach ($routePlans as $route) {
-                    $orderId = $route->order_id;
-                    $statusId = $route->status_id;
-
-                    $customerId = DB::table('orders')
-                                    ->where('id', $orderId)
-                                    ->value('customer_id');
-
-                    // Initialize customer's actions if not already present
-                    if (!isset($customerActions[$customerId])) {
-                        $customerActions[$customerId] = [
-                            'pickup' => false,
-                            'dropoff' => false,
-                            'pickdrop' => false
-                        ];
-                    }
-
-                    // Update customer actions based on status
-                    if ($statusId == 1) {
-                        $customerActions[$customerId]['pickup'] = true;
-                    } elseif ($statusId == 2) {
-                        $customerActions[$customerId]['dropoff'] = true;
-                    } elseif ($statusId == 3) {
-                        $customerActions[$customerId]['pickdrop'] = true;
-                    }
-                }
-
-                $pickdropCount = 0;
-                $pickupCount = 0;
-                $dropoffCount = 0;
-
-                // Determine the final counts based on customer actions
-                foreach ($customerActions as $actions) {
-                    if ($actions['pickdrop'] || ($actions['pickup'] && $actions['dropoff'])) {
-                        $pickdropCount++;
-                    } else {
-                        if ($actions['pickup']) {
-                            $pickupCount++;
-                        }
-                        if ($actions['dropoff']) {
-                            $dropoffCount++;
-                        }
-                    }
-                }
-
-                return [
-                    'pickdrop' => $pickdropCount,
-                    'pickup' => $pickupCount,
-                    'dropoff' => $dropoffCount
-                ];
+    // Determine the final counts based on customer actions
+    foreach ($customerActions as $actions) {
+        if ($actions['pickdrop'] || ($actions['pickup'] && $actions['dropoff'])) {
+            $pickdropCount++;
+        } else {
+            if ($actions['pickup']) {
+                $pickupCount++;
             }
+            if ($actions['dropoff']) {
+                $dropoffCount++;
+            }
+        }
+    }
+
+    return [
+        'pickdrop' => $pickdropCount,
+        'pickup' => $pickupCount,
+        'dropoff' => $dropoffCount
+    ];
+}    
 
     public function fn_calc_covered_kms($rider_id, $dt)
     {
@@ -698,7 +663,7 @@ public function list(Request $request)
 
     }
     
-    public function edit($id){
+   public function edit($id){
       
        
             
@@ -733,8 +698,191 @@ public function list(Request $request)
                             ->where('rider_histories.rider_id', $rider_id)
                             ->whereDate('rider_histories.plan_date',$date)
                             ->first();
-         
+            $pickdrop_orders         = DB::table('route_plans')
+                            ->leftjoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                            ->leftjoin('customers', 'customers.id', '=', 'orders.customer_id')
+                            ->leftjoin('statuses', 'statuses.id', '=', 'route_plans.status_id')
+                            ->leftjoin('time_slots', 'time_slots.id', '=', 'route_plans.timeslot_id')
+                            // ->leftjoin('customer_has_addresses', 'customer_has_addresses.id', '=', 'route_plans.address_id')
+                            // ->leftjoin('customer_has_wallets', 'customer_has_wallets.order_id', '=', 'route_plans.order_id')
+                            ->orderBy('orders.customer_id')
+                            ->select(
+                                        'route_plans.*',
+                                        'orders.pickup_address',
+                                        'orders.customer_id as customerID',
+                                        'orders.delivery_address',
+                                        'statuses.name as status_name',
+                                        'customers.name as customer_name',
+                                        'customers.contact_no as customer_contact_no',
+                                        // 'customer_has_addresses.address as customer_address',
+                                        'time_slots.start_time',
+                                        'time_slots.end_time',
+                                            DB::raw('CONCAT(time_slots.start_time,  "  -  ", time_slots.end_time) as timeslot_name'),
+                                    )
+                            // ->where('route_plans.schedule', 0) 
+                            
+                            ->whereDate('route_plans.updated_at',$date)
+                            ->whereNull('route_plans.is_canceled')
+                            ->where('route_plans.rider_id', $rider_id)
+                            ->where('route_plans.status_id',3)
+                            ->get();
+                            $uniqueCustomerPickdrop = $pickdrop_orders->pluck('customerID')->unique()->toArray();    
+                              // dd($uniqueCustomerPickdrop);
 
+                $OrderPickdrop = [];
+
+
+                foreach ($uniqueCustomerPickdrop as $customerId) {
+                    $firstOrder = DB::table('route_plans')
+                        ->leftJoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                        ->select('orders.id as order_id')
+                        ->where('route_plans.rider_id', $rider_id)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('route_plans.status_id', 3)
+                        ->orderBy('route_plans.updated_at')
+                        ->first();
+
+                    if ($firstOrder) {
+                        $OrderPickdrop[$customerId] = $firstOrder->order_id;
+                    }
+                }
+                //dd($OrderPickdrop);
+                
+
+                $pick_orders         = DB::table('route_plans')
+                            ->leftjoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                            ->leftjoin('customers', 'customers.id', '=', 'orders.customer_id')
+                            ->leftjoin('statuses', 'statuses.id', '=', 'route_plans.status_id')
+                            ->leftjoin('time_slots', 'time_slots.id', '=', 'route_plans.timeslot_id')
+                            // ->leftjoin('customer_has_addresses', 'customer_has_addresses.id', '=', 'route_plans.address_id')
+                            // ->leftjoin('customer_has_wallets', 'customer_has_wallets.order_id', '=', 'route_plans.order_id')
+                            ->orderBy('orders.customer_id')
+                            ->select(
+                                        'route_plans.*',
+                                        'orders.pickup_address',
+                                        'orders.customer_id as customerID',
+                                        'orders.delivery_address',
+                                        'statuses.name as status_name',
+                                        'customers.name as customer_name',
+                                        'customers.contact_no as customer_contact_no',
+                                        // 'customer_has_addresses.address as customer_address',
+                                        'time_slots.start_time',
+                                        'time_slots.end_time',
+                                            DB::raw('CONCAT(time_slots.start_time,  "  -  ", time_slots.end_time) as timeslot_name'),
+                                    )
+                            // ->where('route_plans.schedule', 0) 
+                            
+                            ->whereDate('route_plans.updated_at',$date)
+                            ->whereNull('route_plans.is_canceled')
+                            ->where('route_plans.rider_id', $rider_id)
+                            ->where('route_plans.status_id',1)
+                            ->get();
+                             $uniqueCustomerPick = $pick_orders->pluck('customerID')->unique()->toArray();
+                             
+                             //dd($uniqueCustomerPick);
+                $OrderPick = [];
+
+
+                foreach ($uniqueCustomerPick as $customerId) {
+                    $firstOrder = DB::table('route_plans')
+                        ->leftJoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                        ->select('orders.id as order_id')
+                        ->where('route_plans.rider_id', $rider_id)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('route_plans.status_id', 1)
+                        ->orderBy('route_plans.updated_at')
+                        ->first();
+
+                    if ($firstOrder) {
+                        $OrderPick[$customerId] = $firstOrder->order_id;
+                    }
+                }
+                ///dd($OrderPick);
+
+
+                $drop_orders         = DB::table('route_plans')
+                            ->leftjoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                            ->leftjoin('customers', 'customers.id', '=', 'orders.customer_id')
+                            ->leftjoin('statuses', 'statuses.id', '=', 'route_plans.status_id')
+                            ->leftjoin('time_slots', 'time_slots.id', '=', 'route_plans.timeslot_id')
+                            // ->leftjoin('customer_has_addresses', 'customer_has_addresses.id', '=', 'route_plans.address_id')
+                            // ->leftjoin('customer_has_wallets', 'customer_has_wallets.order_id', '=', 'route_plans.order_id')
+                            ->orderBy('orders.customer_id')
+                            ->select(
+                                        'route_plans.*',
+                                        'orders.pickup_address',
+                                        'orders.customer_id as customerID',
+                                        'orders.delivery_address',
+                                        'statuses.name as status_name',
+                                        'customers.name as customer_name',
+                                        'customers.contact_no as customer_contact_no',
+                                        // 'customer_has_addresses.address as customer_address',
+                                        'time_slots.start_time',
+                                        'time_slots.end_time',
+                                            DB::raw('CONCAT(time_slots.start_time,  "  -  ", time_slots.end_time) as timeslot_name'),
+                                    )
+                            // ->where('route_plans.schedule', 0) 
+                            
+                            ->whereDate('route_plans.updated_at',$date)
+                            ->whereNull('route_plans.is_canceled')
+                            ->where('route_plans.rider_id', $rider_id)
+                            ->where('route_plans.status_id',2)
+                            ->get();
+                             $uniqueCustomerDrop = $drop_orders->pluck('customerID')->unique()->toArray();
+                             
+                             //dd($uniqueCustomerDrop);
+                $OrderDrop = [];
+                foreach ($uniqueCustomerDrop as $customerId) {
+                    $firstOrder = DB::table('route_plans')
+                        ->leftJoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                        ->select('orders.id as order_id')
+                        ->where('route_plans.rider_id', $rider_id)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('route_plans.status_id', 2)
+                        ->orderBy('route_plans.updated_at')
+                        ->first();
+
+                    if ($firstOrder) {
+                        $OrderDrop[$customerId] = $firstOrder->order_id;
+                    }
+                }
+                //dd($OrderDrop);
+
+                $unique_orders = [];
+
+                // Populate the dictionary with Pickdrop data
+                foreach ($uniqueCustomerPickdrop as $customer_id) {
+                    $order_id = $OrderPickdrop[$customer_id] ?? null;
+                    if ($order_id !== null) {
+                        $unique_orders[$customer_id] = $order_id;
+                    }
+                }
+
+                // Add Pickup data to the dictionary only if the customer ID is not already present and is not null
+                foreach ($uniqueCustomerPick as $customer_id) {
+                    $order_id = $OrderPick[$customer_id] ?? null;
+                    if ($customer_id !== null && !array_key_exists($customer_id, $unique_orders) && $order_id !== null) {
+                        $unique_orders[$customer_id] = $order_id;
+                    }
+                }
+
+                // Extract the customer IDs and order IDs from the dictionary
+                $result_customer_ids = array_keys($unique_orders);
+                $result_order_ids = array_values($unique_orders);
+                foreach ($uniqueCustomerDrop as $customer_id) {
+                        $order_id = $OrderDrop[$customer_id] ?? null;
+                        if ($customer_id !== null && !array_key_exists($customer_id, $unique_orders) && $order_id !== null) {
+                            $unique_orders[$customer_id] = $order_id;
+                        }
+                    }
+
+                    // Final extraction of customer IDs and order IDs
+                    $resultdrop_customer_ids = array_keys($unique_orders);
+                    $resultdrop_order_ids = array_values($unique_orders);
+                    //dd($resultdrop_order_ids);
             // setting up the orders from route plans table
             $orders     = DB::table('route_plans')
                             ->leftjoin('orders', 'orders.id', '=', 'route_plans.order_id')
@@ -761,6 +909,7 @@ public function list(Request $request)
                             ->whereDate('route_plans.updated_at',$date)
                             ->whereNull('route_plans.is_canceled')
                             ->where('route_plans.rider_id', $rider_id)
+                            ->whereIn('route_plans.order_id', $resultdrop_order_ids)
                             ->get()
                             ->all();
                
@@ -937,7 +1086,190 @@ public function checkLockStatus(Request $request)
                             ->where('rider_histories.rider_id', $rider_id)
                             ->whereDate('rider_histories.plan_date',$date)
                             ->first();
-       
+            $pickdrop_orders         = DB::table('route_plans')
+                            ->leftjoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                            ->leftjoin('customers', 'customers.id', '=', 'orders.customer_id')
+                            ->leftjoin('statuses', 'statuses.id', '=', 'route_plans.status_id')
+                            ->leftjoin('time_slots', 'time_slots.id', '=', 'route_plans.timeslot_id')
+                            // ->leftjoin('customer_has_addresses', 'customer_has_addresses.id', '=', 'route_plans.address_id')
+                            // ->leftjoin('customer_has_wallets', 'customer_has_wallets.order_id', '=', 'route_plans.order_id')
+                            ->orderBy('orders.customer_id')
+                            ->select(
+                                        'route_plans.*',
+                                        'orders.pickup_address',
+                                        'orders.customer_id as customerID',
+                                        'orders.delivery_address',
+                                        'statuses.name as status_name',
+                                        'customers.name as customer_name',
+                                        'customers.contact_no as customer_contact_no',
+                                        // 'customer_has_addresses.address as customer_address',
+                                        'time_slots.start_time',
+                                        'time_slots.end_time',
+                                            DB::raw('CONCAT(time_slots.start_time,  "  -  ", time_slots.end_time) as timeslot_name'),
+                                    )
+                            // ->where('route_plans.schedule', 0) 
+                            
+                            ->whereDate('route_plans.updated_at',$date)
+                            ->whereNull('route_plans.is_canceled')
+                            ->where('route_plans.rider_id', $rider_id)
+                            ->where('route_plans.status_id',3)
+                            ->get();
+                            $uniqueCustomerPickdrop = $pickdrop_orders->pluck('customerID')->unique()->toArray();    
+                              // dd($uniqueCustomerPickdrop);
+
+                $OrderPickdrop = [];
+
+
+                foreach ($uniqueCustomerPickdrop as $customerId) {
+                    $firstOrder = DB::table('route_plans')
+                        ->leftJoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                        ->select('orders.id as order_id')
+                        ->where('route_plans.rider_id', $rider_id)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('route_plans.status_id', 3)
+                        ->orderBy('route_plans.updated_at')
+                        ->first();
+
+                    if ($firstOrder) {
+                        $OrderPickdrop[$customerId] = $firstOrder->order_id;
+                    }
+                }
+                //dd($OrderPickdrop);
+                
+
+                $pick_orders         = DB::table('route_plans')
+                            ->leftjoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                            ->leftjoin('customers', 'customers.id', '=', 'orders.customer_id')
+                            ->leftjoin('statuses', 'statuses.id', '=', 'route_plans.status_id')
+                            ->leftjoin('time_slots', 'time_slots.id', '=', 'route_plans.timeslot_id')
+                            // ->leftjoin('customer_has_addresses', 'customer_has_addresses.id', '=', 'route_plans.address_id')
+                            // ->leftjoin('customer_has_wallets', 'customer_has_wallets.order_id', '=', 'route_plans.order_id')
+                            ->orderBy('orders.customer_id')
+                            ->select(
+                                        'route_plans.*',
+                                        'orders.pickup_address',
+                                        'orders.customer_id as customerID',
+                                        'orders.delivery_address',
+                                        'statuses.name as status_name',
+                                        'customers.name as customer_name',
+                                        'customers.contact_no as customer_contact_no',
+                                        // 'customer_has_addresses.address as customer_address',
+                                        'time_slots.start_time',
+                                        'time_slots.end_time',
+                                            DB::raw('CONCAT(time_slots.start_time,  "  -  ", time_slots.end_time) as timeslot_name'),
+                                    )
+                            // ->where('route_plans.schedule', 0) 
+                            
+                            ->whereDate('route_plans.updated_at',$date)
+                            ->whereNull('route_plans.is_canceled')
+                            ->where('route_plans.rider_id', $rider_id)
+                            ->where('route_plans.status_id',1)
+                            ->get();
+                             $uniqueCustomerPick = $pick_orders->pluck('customerID')->unique()->toArray();
+                             
+                             //dd($uniqueCustomerPick);
+                $OrderPick = [];
+
+
+                foreach ($uniqueCustomerPick as $customerId) {
+                    $firstOrder = DB::table('route_plans')
+                        ->leftJoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                        ->select('orders.id as order_id')
+                        ->where('route_plans.rider_id', $rider_id)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('route_plans.status_id', 1)
+                        ->orderBy('route_plans.updated_at')
+                        ->first();
+
+                    if ($firstOrder) {
+                        $OrderPick[$customerId] = $firstOrder->order_id;
+                    }
+                }
+                ///dd($OrderPick);
+
+
+                $drop_orders         = DB::table('route_plans')
+                            ->leftjoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                            ->leftjoin('customers', 'customers.id', '=', 'orders.customer_id')
+                            ->leftjoin('statuses', 'statuses.id', '=', 'route_plans.status_id')
+                            ->leftjoin('time_slots', 'time_slots.id', '=', 'route_plans.timeslot_id')
+                            // ->leftjoin('customer_has_addresses', 'customer_has_addresses.id', '=', 'route_plans.address_id')
+                            // ->leftjoin('customer_has_wallets', 'customer_has_wallets.order_id', '=', 'route_plans.order_id')
+                            ->orderBy('orders.customer_id')
+                            ->select(
+                                        'route_plans.*',
+                                        'orders.pickup_address',
+                                        'orders.customer_id as customerID',
+                                        'orders.delivery_address',
+                                        'statuses.name as status_name',
+                                        'customers.name as customer_name',
+                                        'customers.contact_no as customer_contact_no',
+                                        // 'customer_has_addresses.address as customer_address',
+                                        'time_slots.start_time',
+                                        'time_slots.end_time',
+                                            DB::raw('CONCAT(time_slots.start_time,  "  -  ", time_slots.end_time) as timeslot_name'),
+                                    )
+                            // ->where('route_plans.schedule', 0) 
+                            
+                            ->whereDate('route_plans.updated_at',$date)
+                            ->whereNull('route_plans.is_canceled')
+                            ->where('route_plans.rider_id', $rider_id)
+                            ->where('route_plans.status_id',2)
+                            ->get();
+                             $uniqueCustomerDrop = $drop_orders->pluck('customerID')->unique()->toArray();
+                             
+                             //dd($uniqueCustomerDrop);
+                $OrderDrop = [];
+                foreach ($uniqueCustomerDrop as $customerId) {
+                    $firstOrder = DB::table('route_plans')
+                        ->leftJoin('orders', 'orders.id', '=', 'route_plans.order_id')
+                        ->select('orders.id as order_id')
+                        ->where('route_plans.rider_id', $rider_id)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('orders.customer_id', $customerId)
+                        ->where('route_plans.status_id', 2)
+                        ->orderBy('route_plans.updated_at')
+                        ->first();
+
+                    if ($firstOrder) {
+                        $OrderDrop[$customerId] = $firstOrder->order_id;
+                    }
+                }
+                //dd($OrderDrop);
+
+                $unique_orders = [];
+
+                // Populate the dictionary with Pickdrop data
+                foreach ($uniqueCustomerPickdrop as $customer_id) {
+                    $order_id = $OrderPickdrop[$customer_id] ?? null;
+                    if ($order_id !== null) {
+                        $unique_orders[$customer_id] = $order_id;
+                    }
+                }
+
+                // Add Pickup data to the dictionary only if the customer ID is not already present and is not null
+                foreach ($uniqueCustomerPick as $customer_id) {
+                    $order_id = $OrderPick[$customer_id] ?? null;
+                    if ($customer_id !== null && !array_key_exists($customer_id, $unique_orders) && $order_id !== null) {
+                        $unique_orders[$customer_id] = $order_id;
+                    }
+                }
+
+                // Extract the customer IDs and order IDs from the dictionary
+                $result_customer_ids = array_keys($unique_orders);
+                $result_order_ids = array_values($unique_orders);
+                foreach ($uniqueCustomerDrop as $customer_id) {
+                        $order_id = $OrderDrop[$customer_id] ?? null;
+                        if ($customer_id !== null && !array_key_exists($customer_id, $unique_orders) && $order_id !== null) {
+                            $unique_orders[$customer_id] = $order_id;
+                        }
+                    }
+
+                    // Final extraction of customer IDs and order IDs
+                    $resultdrop_customer_ids = array_keys($unique_orders);
+                    $resultdrop_order_ids = array_values($unique_orders);                   
 
             // setting up the orders from route plans table
             $orders     = DB::table('route_plans')
@@ -964,6 +1296,7 @@ public function checkLockStatus(Request $request)
                             
                             ->whereDate('route_plans.updated_at',$date)
                             ->whereNull('route_plans.is_canceled')
+                            ->whereIn('route_plans.order_id', $resultdrop_order_ids)
                             ->where('route_plans.rider_id', $rider_id)
                             ->get()
                             ->all();
