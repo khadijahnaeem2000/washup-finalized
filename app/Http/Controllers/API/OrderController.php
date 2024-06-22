@@ -2083,20 +2083,29 @@ public function noMoreOrder($order_id)
         $addonTot = $this->fn_get_all_addons_amount($order->order_id);
         $totalAmountSum += $serviceTot + $addonTot;
     }
-  
-    // Update delivery charges if total amount exceeds 700
-    if ($totalAmountSum > 700) {
-        foreach ($orders as $order) {
+
+    // Check if total amount exceeds 700
+    $totalExceedsThreshold = $totalAmountSum > 700;
+
+    // Update delivery charges based on the total amount
+    $orderCount = $orders->count();
+    foreach ($orders as $index => $order) {
+        if ($totalExceedsThreshold || $index < $orderCount - 1) {
             DB::table('orders')
                 ->where('id', $order->order_id)
                 ->update(['delivery_charges' => 0]);
+        } else {
+            // For the last order of the day if total is less than 700, keep the delivery charges as is
+            DB::table('orders')
+                ->where('id', $order->order_id)
+                ->update(['delivery_charges' => $order->delivery_charges]);
         }
     }
 
     // Fetch orders again after updating delivery charges
     $orders = $orders->toArray(); // Convert to array to clear previous query bindings
     $orders = collect($orders);
-   foreach ($orders as $order) {
+    foreach ($orders as $order) {
         $email_alert = $this->is_email_alert_on($order->order_id);
 
         if ($email_alert == 1) {
@@ -2110,22 +2119,18 @@ public function noMoreOrder($order_id)
             $msg = "Order verified successfully.";
         }
 
-      
-
         // Append the message to the response messages array
         $responseMessages[] = [
             'order_id' => $order->order_id,
             'customer_id' => $order->customer_id,
-          
             'message' => $msg
         ];
     }
 
-
-
     // Return response with all messages
     return response()->json(['status' => 'success', 'messages' => $responseMessages], 200);
 }
+
 
 
 
