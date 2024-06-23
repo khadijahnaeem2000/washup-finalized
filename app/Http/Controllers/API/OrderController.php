@@ -547,7 +547,7 @@ class OrderController extends Controller
     }
 
    public function fetch_items($order_id, $service_id)
-   {     
+        {     
         $orders             = '';
         $orders             = DB::table('route_plans')
                                 ->leftjoin('orders', 'orders.id', '=', 'route_plans.order_id')

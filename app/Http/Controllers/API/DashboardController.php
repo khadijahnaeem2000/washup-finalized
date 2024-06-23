@@ -106,48 +106,98 @@ class DashboardController extends Controller
         $profilePic     = $rider->image;                    
         $profileName    = $rider->name;
        
+     $pickCustomerIds = [];
+$dropCustomerIds = [];
+$pickDropCustomerIds = [];
+$newPickCustomerIds = [];
+$newDropCustomerIds = [];
+$totalPickCustomer = [];
+$totalDropCustomer = [];
+$totalPickDropCustomer = [];
+$orders = DB::table('route_plans')
+    ->join('orders', 'route_plans.order_id', '=', 'orders.id')
+    ->whereNotNull('route_plans.route')
+    // ->where('route_plans.complete', 0)
+    ->where('route_plans.schedule', 1)
+    ->whereDate('route_plans.updated_at', $this->today)
+    ->where('route_plans.rider_id', $rider_id)
+    ->select('route_plans.*', 'orders.customer_id')
+    ->get();
 
-        $orders         = DB::table('route_plans')
-                            ->whereNotNull('route_plans.route')
-                            // ->where('route_plans.complete',0)
-                            ->where('route_plans.schedule',1)
-                            ->whereDate('route_plans.updated_at',$this->today)
-                            ->where('route_plans.rider_id',$rider_id)
-                            ->get();
+if (!($orders->isEmpty())) {
+    foreach ($orders as $key => $value) {
+        
+        if ($value->status_id == 1) {
+            $totalPickCustomer[] = $value->customer_id;
+            if ($value->complete == 1) {
+                $pickCustomerIds[] = $value->customer_id;
+                $pickAchieved++;
+            }
+            $pickTarget++;
+        } else if ($value->status_id == 2) {
+            $totalDropCustomer[] = $value->customer_id;
+            if ($value->complete == 1) {
+                $dropCustomerIds[] = $value->customer_id;
+                $dropAchieved++;
+            }
+            $dropTarget++;
+        } else if ($value->status_id == 3) {
+            $totalPickDropCustomer[] = $value->customer_id;
+            if ($value->complete == 1) {
+                $pickDropCustomerIds[] = $value->customer_id;
+                $pickDropAchieved++;
+            }
+            $pickDropTarget++;
+        }
 
-        if(!($orders->isEmpty())){
-            foreach ($orders as $key => $value) {
-                if($value->status_id == 1){
-                    if($value->complete == 1){
-                        $pickAchieved++;
-                    }
-                    $pickTarget++;
-                }else if($value->status_id == 2){
-                        if($value->complete == 1){
-                            $dropAchieved++;
-                        }
-                        $dropTarget++;
-                }else if($value->status_id == 3){
-                    if($value->complete == 1){
-                        $pickDropAchieved++;
-                    }
-                    $pickDropTarget++;
-                }
-    
-                if($value->complete==1){
-                    $chk    = $this->fn_time_achieved($value->id, $value->time_at_loc);
-                    if($chk == true){
-                        $onTimeAchieved++;
-                    }
-                }
+        if ($value->complete == 1) {
+            $chk = $this->fn_time_achieved($value->id, $value->time_at_loc);
+            if ($chk == true) {
+                $onTimeAchieved++;
             }
         }
+    }
+    $GrandPickAchieved = array_filter($totalPickCustomer, function($customerId) use ($totalPickDropCustomer) {
+        return !in_array($customerId, $totalPickDropCustomer);
+    });
+    $GrandDropAchieved = array_filter($totalDropCustomer, function($customerId) use ($totalPickDropCustomer) {
+        return !in_array($customerId, $totalPickDropCustomer);
+    });
+    // Filter out pickCustomerIds that are not in pickDropCustomerIds
+    $newPickCustomerIds = array_filter($pickCustomerIds, function($customerId) use ($pickDropCustomerIds) {
+        return !in_array($customerId, $pickDropCustomerIds);
+    });
+
+    $newDropCustomerIds = array_filter($dropCustomerIds, function($customerId) use ($pickDropCustomerIds) {
+        return !in_array($customerId, $pickDropCustomerIds);
+    });
+    // If you need $newPickCustomerIds as indexed array without gaps
+   
+}
+$newPickAcheived = array_values($GrandPickAchieved);
+$PickupTarget = count($newPickAcheived);
+
+$newDropAcheived = array_values($GrandDropAchieved);
+$DropoffTarget = count($newDropAcheived);
+
+ $newPickCustomerIds = array_values($newPickCustomerIds);
+ $newPickup = count($newPickCustomerIds);
+
+ $newDropCustomerIds = array_values($newDropCustomerIds);
+ $newDropoff = count($newDropCustomerIds);
+// Now $newPickCustomerIds contains the desired customer IDs
+
+        $allCustomerIds = array_merge($pickCustomerIds, $dropCustomerIds, $pickDropCustomerIds);
+        $uniqueCustomerIds = array_unique($allCustomerIds);
+
+        // Count the number of unique customer IDs
+        $uniqueCustomerCount = count($uniqueCustomerIds);
 
       
 
         // BEGIN::Setting variables
             $totalLocationTarget           = ( $pickDropTarget + $pickTarget +$dropTarget );
-            $totalLocationAchieved         = ( $pickDropAchieved + $pickAchieved +$dropAchieved );
+            $totalLocationAchieved         = $uniqueCustomerCount;
 
             $onTimeTarget                  = ( $totalLocationTarget );
 
@@ -157,11 +207,11 @@ class DashboardController extends Controller
             $rec['pickDropTarget']         = $pickDropTarget;
             $rec['pickDropAchieved']       = $pickDropAchieved;
 
-            $rec['pickTarget']             = $pickTarget;
-            $rec['pickAchieved']           = $pickAchieved;
+            $rec['pickTarget']             = $PickupTarget;
+            $rec['pickAchieved']           = $newPickup;
 
-            $rec['dropTarget']             = $dropTarget;
-            $rec['dropAchieved']           = $dropAchieved;
+            $rec['dropTarget']             = $DropoffTarget;
+            $rec['dropAchieved']           = $newDropoff;
 
             $rec['onTimeTarget']           = $onTimeTarget;
             $rec['onTimeAchieved']         = $onTimeAchieved;
