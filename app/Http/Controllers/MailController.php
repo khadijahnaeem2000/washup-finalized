@@ -300,196 +300,140 @@ class MailController extends Controller {
     }
 
 
-    public function send_invoice($order_id) {
+   public function send_invoice($order_id) {
 
-        // $order_id           = 82;
-        if(!(isset($order_id))){
-            return 0;
-        }
-        $orders               = DB::table('orders')
-                                ->leftjoin('customers', 'customers.id', '=', 'orders.customer_id')
-                                ->where('orders.id', $order_id)
-                                ->select(
-                                            'orders.*',
-                                            DB::raw('DATE_FORMAT(orders.pickup_date, "%d-%m-%Y") as pickup_date'),
-                                            DB::raw('DATE_FORMAT(orders.delivery_date, "%d-%m-%Y") as delivery_date'),
-                                            'customers.name as customer_name',
-                                            'customers.contact_no as contact_no',
-                                            'customers.email as customer_email',
-                                        )
-                                ->first();
-                                // dd($orders);
-
-        if($orders !=null){
-
-            // $d_charges                  = $this->fn_get_delivery_charges();
-            // $service_tot                = $this->fn_get_service_amount($order_id);
-            // $addon_tot                  = $this->fn_get_addon_amount($order_id);
-            // $tot                        = ( $service_tot + $addon_tot);
-            // if($tot < ($d_charges->order_amount)){
-            //     $delivery_charges = $d_charges->delivery_charges;   // delivery charges will be applied
-            // }else{
-            //     $delivery_charges = 0;                              // delivery charges will not be applied
-            // }
-            // $orders->delivery_charges = $delivery_charges;
-
-            // if($orders->ref_order_id!= NULL){
-            //     $order_id = $orders->ref_order_id;
-            // }
-
-            $selected_services      = DB::table('order_has_services')
-                                        ->leftjoin('services', 'services.id', '=', 'order_has_services.service_id')
-                                        ->leftjoin('units', 'units.id', '=', 'services.unit_id')
-                                        ->where('order_has_services.order_id', $order_id)
-                                        ->select(
-                                                    'services.id as service_id',
-                                                    'units.id as unit_id',
-                                                    'services.name as service_name',
-                                                    'order_has_services.weight as weight',
-                                                    'order_has_services.qty as service_qty',
-                                                )
-                                                ->orderBy('order_number','ASC')
-                                        ->get()
-                                        ->all();
-
-                                        // dd($selected_services)  ;
-
-                                            $record = array();
-            foreach ($selected_services as $service_key => $service_value) {
-
-                if($service_value->unit_id == 2){
-
-                    // unit id : 2 means item wise rate
-                    $selected_items         = DB::table('order_has_items')
-                                                ->leftjoin('items', 'items.id', '=', 'order_has_items.item_id')
-                                                // ->leftjoin('customer_has_items', 'customer_has_items.item_id', '=', 'order_has_items.item_id')
-                                                ->leftjoin('services', 'services.id', '=', 'order_has_items.service_id')
-                                                // ->leftjoin('order_has_services', 'order_has_services.order_id', '=', 'order_has_items.order_id')
-                                                ->where('order_has_items.order_id', $order_id)
-                                                // ->where('customer_has_items.service_id', $service_value->service_id)
-                                                // ->where('customer_has_items.customer_id', $orders->customer_id)
-                                                ->where('order_has_items.service_id', $service_value->service_id)
-                                                ->select(
-                                                            'items.id as item_id',
-                                                            'items.short_name as item_name',
-                                                            'order_has_items.service_id as service_id',
-                                                            'order_has_items.pickup_qty as pickup_qty',
-                                                            'services.name as service_name',
-                                                            // 'customer_has_items.item_rate as item_rate',
-                                                            'order_has_items.cus_item_rate as item_rate',
-                                                            'order_has_items.id as ord_itm_id'
-                                                        )
-                                                ->get()
-                                                ->all();
-
-                }else{
-                    $selected_items         = DB::table('order_has_items')
-                                                ->leftjoin('items', 'items.id', '=', 'order_has_items.item_id')
-                                                ->leftjoin('services', 'services.id', '=', 'order_has_items.service_id')
-                                                ->leftjoin('order_has_services', 'order_has_services.service_id', '=', 'order_has_items.service_id')
-                                                ->where('order_has_items.order_id', $order_id)
-                                                ->where('order_has_services.order_id', $order_id)
-                                                ->where('order_has_items.service_id', $service_value->service_id)
-                                                ->select(
-                                                            'items.id as item_id',
-                                                            'items.short_name as item_name',
-                                                            'order_has_items.service_id as service_id',
-                                                            'order_has_items.pickup_qty as pickup_qty',
-                                                            'order_has_services.cus_service_rate as service_rate',
-                                                            'services.name as service_name',
-                                                            'order_has_items.id as ord_itm_id'
-                                                        )
-                                                ->get()
-                                                ->all();
-                                                // dd($selected_items);
-                }
-
-
-                // $addons = array();
-
-                foreach ($selected_items as $item_key => $item_value) {
-                    $selected_addons        = DB::table('order_has_addons')
-                                                ->leftjoin('addons', 'addons.id', '=', 'order_has_addons.addon_id')
-                                                ->where('order_has_addons.order_id', $order_id)
-                                                ->where('order_has_addons.service_id', $service_value->service_id)
-                                                ->where('order_has_addons.item_id', $item_value->item_id)
-                                                ->where('order_has_addons.ord_itm_id', $item_value->ord_itm_id)
-                                                ->select('addons.id as addon_id',
-                                                        'addons.name as addon_name',
-                                                        // 'addons.rate as addon_rate',
-                                                        'order_has_addons.cus_addon_rate as addon_rate',
-                                                        'order_has_addons.item_id as item_id',
-                                                        'order_has_addons.service_id as service_id',
-                                                        'order_has_addons.ord_itm_id as ord_itm_id',
-                                                        )
-                                                ->get()
-                                                ->all();
-
-                    $selected_items[$item_key]->addons = $selected_addons;
-
-
-                }
-
-                $record[$service_value->service_id]         = $service_value;
-                $record[$service_value->service_id]->items  = $selected_items;
-
-            }
-
-            //   dd(env("MAIL_FROM_ADDRESS"))                      ;
-
-            // $data = $orders;
-            // return view('mails.index',
-            // compact('data',
-            //         'record'
-            //     )
-            // );
-
-            // dd("stopped");
-
-            if($record){
-                $to_name    = $orders->customer_name;
-                $to_email   = $orders->customer_email;
-                // $to_email   = 'someone@gmail,,,.com';
-                $data       = array(
-                                    "data"                  => $orders,
-                                    "record"                => $record,
-                                );
-                // $file       = public_path('mail_assets/terms_and_conditions.pdf');
-                try {
-                    //check if
-                    if(filter_var($to_email, FILTER_VALIDATE_EMAIL) === FALSE) {
-                      //throw exception if email is not valid
-                      throw new Exception("$to_email is not valid email");
-                    }
-                   $rec  =  Mail::send('mails.index', $data, function($message) use ($to_name, $to_email) {
-                        // $message->attach($file);
-                        $message->from(env("MAIL_FROM_ADDRESS"),'Washup');
-                        $message->to($to_email, $to_name)->subject('Updated Invoice');
-                    });
-
-                    // dd($rec);
-                  }catch (Exception $e) {
-                    // echo $e;
-
-                    return 0;
-                 }
-
-               return 1;
-
-            }else{
-               return 0;
-            }
-
-
-
-        }else{
-            return 0;
-        }
-
-
-
-
+    if (!(isset($order_id))) {
+        return 0;
     }
+    $orders = DB::table('orders')
+        ->leftjoin('customers', 'customers.id', '=', 'orders.customer_id')
+        ->where('orders.id', $order_id)
+        ->select(
+            'orders.*',
+            DB::raw('DATE_FORMAT(orders.pickup_date, "%d-%m-%Y") as pickup_date'),
+            DB::raw('DATE_FORMAT(orders.delivery_date, "%d-%m-%Y") as delivery_date'),
+            'customers.name as customer_name',
+            'customers.contact_no as contact_no',
+            'customers.email as customer_email'
+        )
+        ->first();
+
+    if ($orders != null) {
+        $selected_services = DB::table('order_has_services')
+            ->leftjoin('services', 'services.id', '=', 'order_has_services.service_id')
+            ->leftjoin('units', 'units.id', '=', 'services.unit_id')
+            ->where('order_has_services.order_id', $order_id)
+            ->select(
+                'services.id as service_id',
+                'units.id as unit_id',
+                'services.name as service_name',
+                'order_has_services.weight as weight',
+                'order_has_services.qty as service_qty'
+            )
+            ->orderBy('order_number', 'ASC')
+            ->get()
+            ->all();
+
+        $record = array();
+        foreach ($selected_services as $service_key => $service_value) {
+            if ($service_value->unit_id == 2) {
+                $selected_items = DB::table('order_has_items')
+                    ->leftjoin('items', 'items.id', '=', 'order_has_items.item_id')
+                    ->leftjoin('services', 'services.id', '=', 'order_has_items.service_id')
+                    ->where('order_has_items.order_id', $order_id)
+                    ->where('order_has_items.service_id', $service_value->service_id)
+                    ->select(
+                        'items.id as item_id',
+                        'items.short_name as item_name',
+                        'order_has_items.service_id as service_id',
+                        'order_has_items.pickup_qty as pickup_qty',
+                        'services.name as service_name',
+                        'order_has_items.cus_item_rate as item_rate',
+                        'order_has_items.id as ord_itm_id'
+                    )
+                    ->get()
+                    ->all();
+            } else {
+                $selected_items = DB::table('order_has_items')
+                    ->leftjoin('items', 'items.id', '=', 'order_has_items.item_id')
+                    ->leftjoin('services', 'services.id', '=', 'order_has_items.service_id')
+                    ->leftjoin('order_has_services', 'order_has_services.service_id', '=', 'order_has_items.service_id')
+                    ->where('order_has_items.order_id', $order_id)
+                    ->where('order_has_services.order_id', $order_id)
+                    ->where('order_has_items.service_id', $service_value->service_id)
+                    ->select(
+                        'items.id as item_id',
+                        'items.short_name as item_name',
+                        'order_has_items.service_id as service_id',
+                        'order_has_items.pickup_qty as pickup_qty',
+                        'order_has_services.cus_service_rate as service_rate',
+                        'services.name as service_name',
+                        'order_has_items.id as ord_itm_id'
+                    )
+                    ->get()
+                    ->all();
+            }
+
+            foreach ($selected_items as $item_key => $item_value) {
+                $selected_addons = DB::table('order_has_addons')
+                    ->leftjoin('addons', 'addons.id', '=', 'order_has_addons.addon_id')
+                    ->where('order_has_addons.order_id', $order_id)
+                    ->where('order_has_addons.service_id', $service_value->service_id)
+                    ->where('order_has_addons.item_id', $item_value->item_id)
+                    ->where('order_has_addons.ord_itm_id', $item_value->ord_itm_id)
+                    ->select(
+                        'addons.id as addon_id',
+                        'addons.name as addon_name',
+                        'order_has_addons.cus_addon_rate as addon_rate',
+                        'order_has_addons.item_id as item_id',
+                        'order_has_addons.service_id as service_id',
+                        'order_has_addons.ord_itm_id as ord_itm_id'
+                    )
+                    ->get()
+                    ->all();
+
+                $selected_items[$item_key]->addons = $selected_addons;
+            }
+
+            $record[$service_value->service_id] = $service_value;
+            $record[$service_value->service_id]->items = $selected_items;
+        }
+
+        if ($record) {
+            $to_name = $orders->customer_name;
+            $to_email = $orders->customer_email;
+            $data = array(
+                "data" => $orders,
+                "record" => $record
+            );
+
+            try {
+                if (filter_var($to_email, FILTER_VALIDATE_EMAIL) === FALSE) {
+                    throw new Exception("$to_email is not valid email");
+                }
+                $rec = Mail::send('mails.index', $data, function($message) use ($to_name, $to_email) {
+                    $message->from(env("MAIL_FROM_ADDRESS"), 'Washup');
+                    $message->to($to_email, $to_name)->subject('Updated Invoice');
+                });
+
+                // Update the send_invoice field to 1 after sending the email
+                DB::table('orders')
+                    ->where('id', $order_id)
+                    ->update(['invoice_send' => 1]);
+
+            } catch (Exception $e) {
+                return 0;
+            }
+
+            return 1;
+        } else {
+            return 0;
+        }
+    } else {
+        return 0;
+    }
+}
+
     
     public function sendMail(){
         $email = "aquib20034@gmail.com";

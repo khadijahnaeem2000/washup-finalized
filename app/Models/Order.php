@@ -42,7 +42,8 @@ class Order extends Model
         'updated_by',
         'phase',
         'DW_when',
-        'DW_who'
+        'DW_who',
+        'invoice_send'
     ];
      protected static function boot()
     {

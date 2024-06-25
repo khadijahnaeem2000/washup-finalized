@@ -125,6 +125,7 @@ class Fuel_ReportController extends Controller
                                 ->where('route_plans.rider_id', $rider_id)
                                 ->whereDate('route_plans.updated_at','>=', $from)  
                                 ->whereDate('route_plans.updated_at','<=', $to)  
+                                ->where('route_plans.complete','=','1')
                                 // ->whereBetween('route_plans.updated_at', [$from, $to])  
                                 
                                 ->whereNull('route_plans.is_canceled')
@@ -134,7 +135,7 @@ class Fuel_ReportController extends Controller
                     ->where('id', $rider_id)
                     ->value('rider_incentives');
                     $rider_name = DB::table('riders')
-                    ->where('id', $rider_id)
+                    ->where('id', $rider_id)   
                     ->value('name');
                 $pickup_rate = DB::table('rider_incentives')
                     ->where('id', $rider)

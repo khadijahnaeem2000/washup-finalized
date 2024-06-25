@@ -2061,6 +2061,7 @@ public function noMoreOrder($order_id)
             'orders.polybags_printed',
             'orders.softner_rating',
             'orders.iron_rating',
+            'orders.invoice_send' // Include the invoice_send field
         )
         ->where('customers.id', function($query) use ($order_id) {
             $query->select('customer_id')
@@ -2084,13 +2085,10 @@ public function noMoreOrder($order_id)
         $totalAmountSum += $serviceTot + $addonTot;
     }
 
-    // Check if total amount exceeds 700
-    $totalExceedsThreshold = $totalAmountSum > 700;
-
     // Update delivery charges based on the total amount
     $orderCount = $orders->count();
     foreach ($orders as $index => $order) {
-        if ($totalExceedsThreshold || $index < $orderCount - 1) {
+        if ($totalAmountSum > 700 || $index < $orderCount - 1) {
             DB::table('orders')
                 ->where('id', $order->order_id)
                 ->update(['delivery_charges' => 0]);
@@ -2106,17 +2104,21 @@ public function noMoreOrder($order_id)
     $orders = $orders->toArray(); // Convert to array to clear previous query bindings
     $orders = collect($orders);
     foreach ($orders as $order) {
-        $email_alert = $this->is_email_alert_on($order->order_id);
+        if ($order->invoice_send == 0) {
+            $email_alert = $this->is_email_alert_on($order->order_id);
 
-        if ($email_alert == 1) {
-            $mail = app('App\Http\Controllers\MailController')->send_invoice($order->order_id);
-            if ($mail == 1) {
-                $msg = "Order verified and email sent successfully.";
+            if ($email_alert == 1) {
+                $mail = app('App\Http\Controllers\MailController')->send_invoice($order->order_id);
+                if ($mail == 1) {
+                    $msg = "Order verified and email sent successfully.";
+                } else {
+                    $msg = "Order verified but email not sent successfully.";
+                }
             } else {
-                $msg = "Order verified but email not sent successfully.";
+                $msg = "Order verified successfully.";
             }
         } else {
-            $msg = "Order verified successfully.";
+            $msg = "Order verified successfully but invoice not sent.";
         }
 
         // Append the message to the response messages array
@@ -2130,6 +2132,8 @@ public function noMoreOrder($order_id)
     // Return response with all messages
     return response()->json(['status' => 'success', 'messages' => $responseMessages], 200);
 }
+
+
 
 
 
